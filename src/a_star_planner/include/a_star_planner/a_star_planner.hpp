@@ -35,6 +35,9 @@ private:
   int occupied_threshold_{50};
   double inflation_radius_{0.55};
   bool allow_unknown_{false};
+  std::string map_topic;
+  std::string goal_topic;
+  std::string plan_topic;
 
   // Cached map.
   bool have_map_{false};

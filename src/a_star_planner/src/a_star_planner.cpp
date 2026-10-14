@@ -23,8 +23,9 @@ AStarPlanner::AStarPlanner(const rclcpp::NodeOptions & options)
   occupied_threshold_ = static_cast<int>(declare_parameter<int>("occupied_threshold", 50));
   inflation_radius_ = declare_parameter<double>("inflation_radius", 0.55);
   allow_unknown_ = declare_parameter<bool>("allow_unknown", false);
-  // TODO(Lesson 10): declare map_topic, goal_topic, and plan_topic as string
-  // parameters with these course defaults.
+  map_topic = declare_parameter<std::string>("map_topic", "/map");
+  goal_topic = declare_parameter<std::string>("goal_topic", "/goal_pose");
+  plan_topic = declare_parameter<std::string>("plan_topic", "/plan");
 
   if (occupied_threshold_ < 0 || occupied_threshold_ > 100) {
     throw std::invalid_argument("occupied_threshold must be between 0 and 100");
