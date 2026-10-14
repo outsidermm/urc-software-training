@@ -7,15 +7,21 @@ void ParticleFilter::applyMotionUpdate(
   double dx_body, double dy_body, double dyaw,
   double translation, double rotation)
 {
-  // TODO(Lesson 9): scale the three noise standard deviations by the amount of
-  // motion, then apply one noisy body-frame delta to every particle in the
-  // direction of that particle's heading. Wrap the updated angle.
-  // This no-op keeps the particle-filter package buildable before the lesson.
-  (void)dx_body;
-  (void)dy_body;
-  (void)dyaw;
-  (void)translation;
-  (void)rotation;
+
+  double sigma_x = x_noise_ * translation;
+  double sigma_y = y_noise_ * translation;
+  double sigma_theta = theta_noise_ * rotation;
+
+  for (auto & particle : particles_) {
+    double noisy_dx = dx_body + gaussianNoise(sigma_x);
+    double noisy_dy = dy_body + gaussianNoise(sigma_y);
+    double noisy_dyaw = dyaw + gaussianNoise(sigma_theta);
+
+    // Update particle position and orientation
+    particle.x += noisy_dx * std::cos(particle.theta) - noisy_dy * std::sin(particle.theta);
+    particle.y += noisy_dx * std::sin(particle.theta) + noisy_dy * std::cos(particle.theta);
+    particle.theta = wrapAngle(particle.theta + noisy_dyaw);
+  }
 }
 
 }  // namespace particle_filter
