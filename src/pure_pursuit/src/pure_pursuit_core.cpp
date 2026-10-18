@@ -1,10 +1,12 @@
 // Pure Pursuit geometry. See pure_pursuit_core.hpp and Lesson 11.
 
 #include "pure_pursuit/pure_pursuit_core.hpp"
+#include "robonav_training_common/angles.hpp"
 
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <algorithm>
 
 namespace robonav_training
 {
@@ -15,12 +17,10 @@ PursuitCommand computePursuitCommand(
   double lookahead_distance, double desired_linear_speed,
   double max_angular_speed, double goal_tolerance)
 {
-  // Part 1 is provided: no path means there is no active goal to follow.
   if (path.empty()) {
     return PursuitCommand{0.0, 0.0, false};
   }
 
-  // Part 2 is provided: stop and report completion inside the goal tolerance.
   const auto & goal = path.back();
   const double distance_to_goal =
     std::hypot(goal[0] - robot_x, goal[1] - robot_y);
@@ -28,8 +28,6 @@ PursuitCommand computePursuitCommand(
     return PursuitCommand{0.0, 0.0, true};
   }
 
-  // Part 3 is provided: find where the robot is closest to the path. The
-  // lookahead search should begin here so it does not pull toward old points.
   std::size_t nearest_index = 0;
   double nearest_distance_squared = std::numeric_limits<double>::infinity();
   for (std::size_t index = 0; index < path.size(); ++index) {
@@ -42,19 +40,45 @@ PursuitCommand computePursuitCommand(
     }
   }
 
-  // TODO(Lesson 11, part 4): search forward from nearest_index for the first
-  // point at least lookahead_distance away; fall back to path.back().
-  // TODO(Lesson 11, part 5): translate and rotate that point into robot-frame
-  // coordinates x_r (forward) and y_r (left).
-  // TODO(Lesson 11, part 6): handle a point behind the robot; otherwise compute
-  // curvature, clamp angular speed, and slow down near the goal.
+  std::size_t lookahead_index = path.size() - 1;
 
-  (void)robot_yaw;
-  (void)lookahead_distance;
-  (void)desired_linear_speed;
-  (void)max_angular_speed;
-  (void)nearest_index;
-  return PursuitCommand{0.0, 0.0, false};
+  for (std::size_t i = nearest_index; i < path.size(); i++) {
+    const double distance =
+      std::hypot(path[i][0] - robot_x, path[i][1] - robot_y);
+    if (distance >= lookahead_distance) {
+      lookahead_index = i;
+      break;
+    }
+  }
+
+  const double dx = path[lookahead_index][0] - robot_x;
+  const double dy = path[lookahead_index][1] - robot_y;
+
+  const double x_r =
+    std::cos(robot_yaw) * dx + std::sin(robot_yaw) * dy;
+  const double y_r =
+    -std::sin(robot_yaw) * dx + std::cos(robot_yaw) * dy;
+
+  PursuitCommand command{0.0, 0.0, false};
+
+  if (x_r < 0.0) {
+    command.linear = 0.05;
+    const double turn_angle = normalizeAngle(std::atan2(y_r, x_r));
+    command.angular = (turn_angle > 0.0) ? max_angular_speed : -max_angular_speed;
+  } else {
+    const double distance = std::hypot(x_r, y_r);
+    const double curvature =
+      (distance > 1e-6) ? (2.0 * y_r) / (distance * distance) : 0.0;
+    
+    if (distance_to_goal < 1.5 * lookahead_distance) {
+      command.linear = desired_linear_speed * (distance_to_goal / (1.5 * lookahead_distance));
+    } else {
+      command.linear = desired_linear_speed;
+    }
+
+    command.angular = std::clamp(command.linear * curvature, -max_angular_speed, max_angular_speed);
+  }
+  return command;
 }
 
 }  // namespace robonav_training

@@ -6,6 +6,7 @@
 #pragma once
 
 #include <memory>
+#include <string>
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -35,8 +36,8 @@ private:
   double goal_tolerance_;
   double control_rate_;
 
-  std::String plan_topic;
-  std::String cmd_vel_topic;
+  std::string plan_topic;
+  std::string cmd_vel_topic;
 
   // State
   nav_msgs::msg::Path path_;
