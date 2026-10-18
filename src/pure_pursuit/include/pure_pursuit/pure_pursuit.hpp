@@ -35,6 +35,9 @@ private:
   double goal_tolerance_;
   double control_rate_;
 
+  std::String plan_topic;
+  std::String cmd_vel_topic;
+
   // State
   nav_msgs::msg::Path path_;
 

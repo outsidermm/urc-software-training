@@ -40,10 +40,8 @@ PurePursuit::PurePursuit(const rclcpp::NodeOptions & options)
   max_angular_speed_ = declare_parameter<double>("max_angular_speed", 1.5);
   goal_tolerance_ = declare_parameter<double>("goal_tolerance", 0.2);
   control_rate_ = declare_parameter<double>("control_rate", 20.0);
-  // TODO(Lesson 11): declare plan_topic and cmd_vel_topic as string parameters
-  // with these course defaults.
-  const std::string plan_topic = "/plan";
-  const std::string cmd_vel_topic = "/cmd_vel";
+  plan_topic = declare_parameter<std::string>("plan_topic", "/plan");
+  cmd_vel_topic = declare_parameter<std::string>("cmd_vel_topic", "/cmd_vel");
 
   if (!std::isfinite(lookahead_distance_) || lookahead_distance_ <= 0.0) {
     throw std::invalid_argument("lookahead_distance must be finite and greater than zero");
